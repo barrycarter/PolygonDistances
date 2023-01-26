@@ -1,0 +1,30 @@
+<link rel="stylesheet" href="includes/leaflet.css" />
+<script src="includes/leaflet.js"></script>
+<script src="includes/turf"></script>
+<body onload="initialize()">
+  <div id="map" style="height: 600px;"></div>
+  <script>
+    function initialize(){
+
+      //Create a Leaflet map and set the view to the center of the polygon
+
+      const map = L.map('map').setView([37.8, -96], 4);
+
+      // Add a tile layer to the map
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+fetch('testfile.geojson')
+    .then(response => response.json())
+    .then(geojson => 
+        L.geoJSON(geojson).addTo(map));
+
+
+}
+
+
+
+
+  </script>
+</body>
+``
