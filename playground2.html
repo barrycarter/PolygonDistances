@@ -14,10 +14,14 @@
 
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-fetch('testfile.geojson')
+fetch('usa.geojson')
     .then(response => response.json())
-    .then(geojson => 
-        L.geoJSON(geojson).addTo(map));
+    .then(geojson => {
+        L.geoJSON(geojson).addTo(map);
+        const buff = turf.buffer(geojson, 25, { units: 'miles' });
+        L.geoJSON(buff).addTo(map);
+}
+);
 
 
 }
