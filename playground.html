@@ -1,5 +1,5 @@
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A==" crossorigin="" />
-<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA==" crossorigin=""></script>
+<link rel="stylesheet" href="includes/leaflet.css" />
+<script src="includes/leaflet.js"></script>
 <script src="https://unpkg.com/@turf/turf"></script>
 <body onload="initialize()">
   <div id="map" style="height: 600px;"></div>
@@ -24,6 +24,8 @@
       const bufferedLayer = L.geoJSON(buffered).addTo(map);
       // Zoom the map to the buffered polygon
       map.fitBounds(bufferedLayer.getBounds());
+
+L.geoJSON(polygon).addTo(map);
     }
   </script>
 </body>
