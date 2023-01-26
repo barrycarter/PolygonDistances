@@ -1,0 +1,30 @@
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A==" crossorigin="" />
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA==" crossorigin=""></script>
+<script src="https://unpkg.com/@turf/turf"></script>
+<body onload="initialize()">
+  <div id="map" style="height: 600px;"></div>
+  <script>
+    function initialize(){
+      //Create a Leaflet map and set the view to the center of the polygon
+      const map = L.map('map').setView([37.8, -96], 4);
+      // Add a tile layer to the map
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+      }).addTo(map);
+      
+      // Create a polygon feature
+      const polygon = turf.polygon([[[-81, 41], [-88, 36], [-84, 31], [-80, 33], [-77, 39], [-81, 41]]]);
+      // Set the buffer distance
+      const distance = 5;
+      // Set the buffer unit
+      const unit = 'miles';
+      // Perform the buffer operation
+      const buffered = turf.buffer(polygon, distance, { units: unit });
+      // Convert the buffered polygon to a Leaflet layer
+      const bufferedLayer = L.geoJSON(buffered).addTo(map);
+      // Zoom the map to the buffered polygon
+      map.fitBounds(bufferedLayer.getBounds());
+    }
+  </script>
+</body>
+``
