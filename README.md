@@ -1,0 +1,1 @@
+The initial purpose of this git is to create distance-from-country maps using a nonstandard(?) technique that projects longitude and latitude to 3D, performs the computations there, and then projects back to longitude and latitude
