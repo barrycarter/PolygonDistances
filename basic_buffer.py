@@ -2,7 +2,7 @@
 
 '''
 
-Boilder plate for peforming algorithm
+Basic Buffer
 
 '''
 import numpy as np
