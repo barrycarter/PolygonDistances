@@ -1,0 +1,50 @@
+Algorithm to convert list of spherical polygons into a Voronoi diagram.
+
+I assume a spherical polygon is defined by an array of 2D vertices (longitude and latitude)
+desired output will either be an image where the areas are drawn with different colors or the edges of the areas are drawn
+
+the x coordinates of the image has the longitude
+the y coordinates has the latitude
+x == 0         -> long == - pi
+x == width     -> long ==   pi
+
+y == 0         -> lat == -pi/2
+y == height    -> lat ==  pi/2
+(the index goes up to width -1 and height -1 tho)
+
+
+variables:
+    current distance
+        this will be incremented by 1 or some constant in every iteration
+    image height
+    image width
+    grids:
+        3d map grid
+            it contains the 3d coordinates corresponding to the pixels
+        property grid
+            every pixel contains the index of the edge pixel it belongs to (will make more sense later)
+            (alternatively, it can contain the 3d coordinates of the edge pixel it belongs to, but in that case we will need to also keep track of the polygon it belongs to)
+    list of active pixels
+        it's the pixels you are currently exploring
+    some grid where the index tells you which edge pixel it belongs to # I need to make this less confusing
+
+
+# pseudocode
+
+current distance = 0
+while "not finished":
+    current distance += 1
+    for active_pixel in active_pixels:
+        explore the 8 surrounding pixels
+        only keep the not-explored-yet ones (for example if they have value -1)
+        compute the distance between the explored pixel and the the edge pixel the current active pixel belongs to using the 3d distance
+        if the distance is less or equal to the current distance:
+            change the value of that pixel to the index of the edge pixel the current active pixel belongs to
+            add that pixel to the list of active pixels
+
+a lot that needs to be added or changed:
+    when do pixels stop being active?
+        when they already had time to explore the 8 surrounding pixels? (not counting as exploring if the distance didn't allow yet)
+    at some point we must update the areas to have the value from the index of the edge pixel to the index of the corresponding polygon
+
+

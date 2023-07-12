@@ -1,0 +1,53 @@
+Algorithm to convert list of spherical polygons into a Voronoi diagram.
+
+I assume a spherical polygon is defined by an array of 2D vertices (longitude and latitude).
+desired output will either be an image where the areas are drawn with different colors or the edges of the areas are drawn.
+
+
+the improvement in this algorithm compared to the previous one is that it is "lazy",
+in the sense that it starts with a really low resolution image (probably could even literally start with 1x1)
+and only augments the pixels that are problematic, aka the pixels near an equidistant point,
+while it makes an early judgement to which polygon some pixels belong to when it can.
+(as the image gets refined, these pixels "become" squares, essentially filling a large area in higher res images)
+
+some subtle things are required for this algorithm tho.
+pixels in the low resolution image must be turned on if and only if there is at least one pixel turned on in the
+corresponding 2x2 square belonging to the 2x resolution image.
+it's similar (the same?) to max pooling, you can see an example here:
+https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSWPGlefwv6ucFML185WO75vOZuH00bkAI4Wr12HF95bm-t684bfcJvN_B0G5dfSlUPO3w&usqp=CAU
+tho values would be 0 or 1.
+it's possible this isn't a strict requirement, but if this isn't followed then additional steps must be made to ensure
+the algorithm works properly.
+I believe we need more than one single image that contains every polygon (just the edges).
+either we'll need one image for every polygon, or we'll need something like a list of arrays, where every array
+contains the coordinates of all the pixels belonging to that polygon.
+
+
+algorithm:
+we start with a really low res image to draw, and a many low res images for the polygons edges (same resolution)
+now active pixels will "link" to many pixels of candidate "owners" instead of only referencing a single pixel like before
+(which means now every active pixel has a list of pixel indices).
+to start the iteration, we first brute force calculate the distances between every pixel in the draw image with
+every pixel in the polygon edges images.  # distances are in the 3d space
+we save the indices of the corresponding edge pixels in a list for every pixel in the draw image.  # hmm, if we have multiple edge polygon images maybe we'll need an extra value or something, in order to identify to which polygon it makes reference to.
+
+loop:
+    for every active pixel:
+        we sort the indices list (using the distance between the pixel this list belongs to and the corresponding pixels these indices make reference to).
+        we only keep the indices of the pixels that are at most 1 unit away from the shortest distance, 1 unit being the distance in 3d from one pixel to an adjacent one.
+        (note: since the images are low res we can't know for sure where the true closest edge pixel is,
+               so we keep track of all the candidates)
+        if all the indices belong to the same polygon group:
+            we know for sure that that pixel belongs to that polygon group, so
+            we paint that pixel in the draw image and
+            we remove this pixel from the active pixels list.
+
+    now we increase the resolution by 2.
+
+    now every active pixel gets split in 4, since now there are 4 corresponding pixels for the previous lower res image
+    but also every candidate pixel gets split in 4.
+    (note that this isn't automatic, we need an algorithm to split them, it should be fairly simple tho)
+    the draw image also becomes 2 times bigger, and every drawn pixel in it now fills 2x2 pixels
+
+
+
