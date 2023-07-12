@@ -1,0 +1,343 @@
+(null)
+AFG Afghanistan
+AGO Angola
+ALB Albania
+AND Andorra
+ARE United Arab Emirates
+ARG Argentina
+ARM Armenia
+ATA Antarctica
+ATA Peter I I.
+ATA South Orkney Is.
+ATG Antigua
+ATG Barbuda
+AU1 Ashmore and Cartier Is.
+AU1 Australia
+AU1 Christmas I.
+AU1 Cocos Is.
+AU1 Coral Sea Is.
+AU1 Heard I. and McDonald Is.
+AU1 Macquarie I.
+AU1 Norfolk Island
+AU1 Tasmania
+AUT Austria
+AZE Azerbaijan
+BDI Burundi
+BEL Brussels
+BEL Flemish
+BEL Walloon Region
+BEN Benin
+BFA Burkina Faso
+BGD Bangladesh
+BGR Bulgaria
+BHR Bahrain
+BHS Bahamas
+BIH Brcko District
+BIH Fed. of Bos. & Herz.
+BIH Rep. Srpska
+BJN Bajo Nuevo Bank (Petrel Is.)
+BLR Belarus
+BLZ Belize
+BOL Bolivia
+BRA Brazil
+BRB Barbados
+BRN Brunei
+BTN Bhutan
+BWA Botswana
+CAF Central African Rep.
+CAN Canada
+CH1 China
+CH1 Hainan
+CH1 Hong Kong
+CH1 Macau
+CH1 Paracel Is.
+CHE Switzerland
+CHL Chile
+CHL Easter I.
+CHL Isla Sala y Gomez
+CIV Ivory Coast
+CMR Cameroon
+CNM Cyprus U.N. Buffer Zone
+COD Congo (Kinshasa)
+COG Congo (Brazzaville)
+COL Colombia
+COM Comoros
+CPV Cape Verde
+CRI Costa Rica
+CUB Cuba
+CUB Guantanamo Bay USNB
+CYN N. Cyprus
+CYP Cyprus
+CZE Czech Rep.
+DEU Germany
+DJI Djibouti
+DMA Dominica
+DN1 Bornholm
+DN1 Denmark
+DN1 Faroe Is.
+DN1 Greenland
+DOM Dominican Rep.
+DZA Algeria
+ECU Ecuador
+ECU Galapagus Is.
+EGY Egypt
+ERI Eritrea
+ESP Balearic Is.
+ESP Canary Is.
+ESP Ceuta
+ESP Melilla
+ESP Spain
+EST Estonia
+ETH Ethiopia
+FI1 Aland
+FI1 Finland
+FJI Fiji
+FR1 Clipperton I.
+FR1 Corsica
+FR1 Fr. Polynesia
+FR1 Fr. S. Antarctic Lands
+FR1 France
+FR1 French Guiana
+FR1 Guadeloupe
+FR1 Martinique
+FR1 New Caledonia
+FR1 Reunion
+FR1 St. Barthelemy
+FR1 St. Martin
+FR1 St. Pierre and Miquelon
+FR1 Wallis and Futuna
+FSM Micronesia
+GAB Gabon
+GB1 Akrotiri
+GB1 Alderney
+GB1 Anguilla
+GB1 Ascension
+GB1 Bermuda
+GB1 Br. Indian Ocean Ter.
+GB1 British Virgin Is.
+GB1 Cayman Is.
+GB1 Dhekelia
+GB1 Diego Garcia NSF
+GB1 England
+GB1 Gibraltar
+GB1 Guernsey
+GB1 Herm
+GB1 Isle of Man
+GB1 Jersey
+GB1 Montserrat
+GB1 N. Ireland
+GB1 Pitcairn Is.
+GB1 Sark
+GB1 Scotland
+GB1 St. Helena
+GB1 Tristan da Cunha
+GB1 Turks and Caicos Is.
+GB1 Wales
+GEO Ajara
+GEO Georgia
+GHA Ghana
+GIN Guinea
+GMB Gambia
+GNB Guinea Bissau
+GNQ Annobon
+GNQ Bioko
+GNQ Rio Muni
+GRC Greece
+GRD Grenada
+GTM Guatemala
+GUY Guyana
+HND Honduras
+HRV Croatia
+HTI Haiti
+HUN Hungary
+IDN Indonesia
+IND Andaman Is.
+IND India
+IND Lakshadweep
+IND Nicobar Is.
+IRL Ireland
+IRN Iran
+IRQ Iraq
+IRQ Iraqi Kurdistan
+IS1 Gaza Strip
+IS1 Israel
+IS1 West Bank
+ISL Iceland
+ITA Isole Pelagie
+ITA Italy
+ITA Pantelleria
+ITA Sardinia
+JAM Jamaica
+JOR Jordan
+JPN Bonin Is.
+JPN Hokkaido
+JPN Honshu
+JPN Izushoto
+JPN Kyushu
+JPN Nanseishoto
+JPN Shikoku
+JPN Volcano Is.
+KAS Siachen Glacier
+KAZ Baykonur
+KAZ Kazakhstan
+KEN Kenya
+KGZ Kyrgyzstan
+KHM Cambodia
+KIR Kiribati
+KNA St. Kitts and Nevis
+KOR Baengnyeongdo
+KOR Dokdo
+KOR Jejudo
+KOR Korean Demilitarized Zone
+KOR S. Korea
+KOR Ulleungdo
+KOS Kosovo
+KWT Kuwait
+LAO Laos
+LBN Lebanon
+LBR Liberia
+LBY Libya
+LCA Saint Lucia
+LIE Liechtenstein
+LKA Sri Lanka
+LSO Lesotho
+LTU Lithuania
+LUX Luxembourg
+LVA Latvia
+MAR Morocco
+MCO Monaco
+MDA Moldova
+MDG Madagascar
+MDV Maldives
+MEX Mexico
+MHL Marshall Is.
+MKD Macedonia
+MLI Mali
+MLT Malta
+MMR Myanmar
+MNE Montenegro
+MNG Mongolia
+MOZ Mozambique
+MRT Mauritania
+MUS Mauritius
+MWI Malawi
+MYS Malaysia
+NAM Namibia
+NER Niger
+NGA Nigeria
+NIC Nicaragua
+NL1 Aruba
+NL1 Caribbean Netherlands
+NL1 Curaçao
+NL1 Netherlands
+NL1 Sint Maarten
+NOR Bouvet I.
+NOR Jan Mayen
+NOR Norway
+NOR Svalbard
+NPL Nepal
+NRU Nauru
+NUL Null Island
+NZ1 Chatham Is.
+NZ1 Cook Is.
+NZ1 N.Z. SubAntarctic Is.
+NZ1 Niue
+NZ1 North I.
+NZ1 South I.
+NZ1 Tokelau
+OMN Oman
+PAK Pakistan
+PAN Panama
+PER Peru
+PGA Spratly Is.
+PHL Philippines
+PLW Palau
+PNG Bougainville
+PNG Papua New Guinea
+POL Poland
+PRK Korean Demilitarized Zone
+PRK North Korea
+PRT Azores
+PRT Madeira
+PRT Portugal
+PRY Paraguay
+QAT Qatar
+ROU Romania
+RUS Crimea
+RUS Kaliningrad
+RUS Russia
+RWA Rwanda
+SAU Saudi Arabia
+SCR Scarborough Reef
+SDN Sudan
+SDS S. Sudan
+SEN Senegal
+SER Serranilla Bank
+SGP Singapore
+SLB Solomon Is.
+SLE Sierra Leone
+SLV El Salvador
+SMR San Marino
+SOM Puntland
+SOM Somalia
+SRB Serbia
+SRB Vojvodina
+STP Principe
+STP Sao Tome
+SUR Suriname
+SVK Slovakia
+SVN Slovenia
+SWE Sweden
+SWZ Swaziland
+SYC Seychelles
+SYR Syria
+SYR UNDOF
+TCD Chad
+TGO Togo
+THA Thailand
+TJK Tajikistan
+TKM Turkmenistan
+TLS East Timor
+TLS Pante Makasar
+TON Tonga
+TTO Tobago
+TTO Trinidad
+TUN Tunisia
+TUR Turkey
+TUV Tuvalu
+TWN Taiwan
+TZA Tanzania
+TZA Zanzibar
+UGA Uganda
+UKR Ukraine
+URY Uruguay
+US1 Alaska
+US1 American Samoa
+US1 Baker I.
+US1 Guam
+US1 Hawaii
+US1 Howland I.
+US1 Jarvis I.
+US1 Johnston Atoll
+US1 Kingman Reef
+US1 Midway Is.
+US1 N. Mariana Is.
+US1 Palmyra Atoll
+US1 Puerto Rico
+US1 U.S. Virgin Is.
+US1 U.S.A.
+US1 Wake Atoll
+UZB Uzbekistan
+VAT Vatican
+VCT St. Vin. and Gren.
+VEN Venezuela
+VNM Vietnam
+VUT Vanuatu
+WSM Samoa
+YEM Suqutra
+YEM Yemen
+ZAF Prince Edward Is.
+ZAF South Africa
+ZMB Zambia
+ZWE Zimbabwe
+null null
