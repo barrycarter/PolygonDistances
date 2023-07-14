@@ -1,6 +1,7 @@
 # testbed
 
 # global imports
+import json
 import random
 import numpy as np
 import geopandas as gpd
@@ -10,6 +11,10 @@ from PIL import Image, ImageFilter
 
 # import my lib
 from bclib import *
+
+# big pictures
+
+Image.MAX_IMAGE_PIXELS = 10**9
 
 # read part of a shapefile
 
@@ -128,6 +133,21 @@ Given an image filename, treat that image as an equiangular map and return the l
     imMain = Image.open(filename)
     width, height = imMain.size
 
+    edge1 = imMain.filter(ImageFilter.FIND_EDGES)
+#    edge1.save("/tmp/temp1.png")
+
+    edgePix1 = np.where(np.array(edge1) != 0)
+    print(np.shape(edgePix1))
+
+    filter4 = ImageFilter.Kernel((3, 3), (0, -1, 0, -1, 4, -1, 0, -1, 0), 1, 0)
+
+    edge2 = imMain.filter(filter4)
+    edgePix2 = np.where(np.array(edge2) != 0)
+    print(np.shape(edgePix2))
+#    edge2.save("/tmp/temp2.png")
+
+    return
+
     allPixels = np.array(imMain)
     litPixels = np.where(allPixels != 0)
     print(litPixels)
@@ -145,16 +165,47 @@ def play5():
     sv = SphericalVoronoi(points, radius, center)
     debug0(object=sv)
     
+# store edge pixels to JSON
+
+def play6(filename):
+
+    imMain = Image.open(filename)
+    width, height = imMain.size
+    edges = imMain.filter(ImageFilter.Kernel((3, 3), (0, -1, 0, -1, 4, -1, 0, -1, 0), 1, 0))
+    edgePix = np.where(np.array(edges) != 0)
+    pixNums = edgePix[0]*width + edgePix[1]
+    edges.save("/tmp/temp3.png")
+    print(pixNums)
+    np.savetxt("/tmp/temp4.txt", pixNums, fmt = '%d', newline=',')
+#    with open('/tmp/arr.json', 'w') as f:
+#        json.dump(pixNums, f, indent=4)
+
+
+######### TESTING BELOW THIS LINE, NO MORE FUNCTIONS PLEASE ########
+
+play6("usa-raster-flat-1350.png")
+
+
+exit()
+
+
+
+
+
+
 
 # play5()
 
-pts = widthHeight2xyz(20, 10)
+# pts = widthHeight2xyz(20, 10)
 
-print(pts)
+# print(pts)
 
 # print(np.shape(pts))
 
 # print(image2xyz("usa-raster-flat-1350.png"))
 
-print(image2xyz("playground.png"))
+# print(image2xyz("playground.png"))
+
+print(image2xyz("usa-raster-flat-43200.png"))
+
 

@@ -1,0 +1,38 @@
+<link rel="stylesheet" href="includes/leaflet.css" />
+<script src="includes/leaflet.js"></script>
+<body onload="initialize()">
+  <div id="map" style="height: 600px;"></div>
+
+<script src="points.js"></script>
+ 
+<script>
+    
+const map = L.map('map').setView([37.8, -96], 4);
+
+var count = 0;
+
+// L.rectangle([[10, 10], [20, 20]]).addTo(map)
+
+for (i in points) {
+
+ var x = -180 + (points[i]%1350 + 0.5)/1350*360
+ var y = 90 - Math.floor(points[i]/1350 + 0.5)/675*180
+
+L.rectangle([[y-180/1350, x-360/1350/2], [y+180/1350,x+360/1350/2]]).addTo(map)
+
+// L.rectangle([[34, -107], [36, -105]]).addTo(map)
+
+
+ console.log("PXY", points[i], x, y)
+
+// if (count++ > 25) {break;}
+
+}
+
+function initialize(){
+ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+}
+
+</script>
+
+</body>
