@@ -1,0 +1,27 @@
+<html>
+  <head>
+  </head>
+  <body>
+
+    <script src="../includes/kdTree-min.js"></script>
+
+<script>DEGREE = 0.017453292519943295769</script>
+
+    <script src="data3.json"></script>
+
+    <script>
+
+
+function distance(a, b) {
+ val = 1 - Math.cos(a.lat)*Math.cos(b.lat)*Math.cos(a.lng-b.lng) - Math.sin(a.lat)*Math.sin(b.lat);
+ console.log("VAL", val);
+ return val
+}
+
+var tree = new kdTree(marks, distance, ["lat", "lng"]);
+console.log(tree.nearest({lat: 35.1*DEGREE, lng: -106.51*DEGREE}, 10));
+
+    </script>
+  </body>
+</html>
+

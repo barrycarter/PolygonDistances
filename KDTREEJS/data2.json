@@ -1,0 +1,4 @@
+var marks=[
+{lat: 35*DEGREE, lng: -106.5*DEGREE},
+{lat: 36*DEGREE, lng: -107.5*DEGREE}
+]
