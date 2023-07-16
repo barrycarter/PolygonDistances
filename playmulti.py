@@ -180,11 +180,47 @@ def play6(filename):
 #    with open('/tmp/arr.json', 'w') as f:
 #        json.dump(pixNums, f, indent=4)
 
+def raster2JSONPixels(**obj):
+
+    """
+
+Converts a raster map into a .js file defining a variable with the height, weight, and edge pixels. Input:
+
+raster: the filename containing the raster map
+var: the variable to assign in the js
+outfile: the name of the output file
+
+    """
+
+    imMain = Image.open(obj['raster'])
+    width, height = imMain.size
+
+    edges = imMain.filter(ImageFilter.Kernel((3, 3), (0, -1, 0, -1, 4, -1, 0, -1, 0), 1, 0))
+
+    edgePix = np.where(np.array(edges) != 0)
+
+    pixNums = edgePix[0]*width + edgePix[1]
+
+#     str = obj[var] + "= {"height": " + height +, "width": {width}, "points": ['
+    # the double { and } below are to escape them, JS vs Python
+    str = f'{obj["var"]} = {{"height": {height}, "width": {width}, "points": '
+
+    str += np.array2string(pixNums, separator=', ', max_line_width = np.inf, threshold = np.inf)
+
+    str += "};"
+
+    with open(obj['outfile'], 'w', encoding='utf-8') as f:
+        f.write(str)
 
 ######### TESTING BELOW THIS LINE, NO MORE FUNCTIONS PLEASE ########
 
-play6("usa-raster-flat-1350.png")
+# play6("usa-raster-flat-1350.png")
 
+raster2JSONPixels(raster="RASTER/US1-raster-43200.png", var="usa", outfile="usa.js")
+
+raster2JSONPixels(raster="RASTER/GB1-raster-43200.png", var="uk", outfile="uk.js")
+
+raster2JSONPixels(raster="RASTER/ARG-raster-43200.png", var="arg", outfile="arg.js")
 
 exit()
 

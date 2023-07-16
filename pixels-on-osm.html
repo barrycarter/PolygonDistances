@@ -4,12 +4,50 @@
 <body onload="initialize()">
   <div id="map" style="height: 600px;"></div>
 
-<script src="usa-43200-edge-points.js"></script>
+<script src="usa.js"></script>
+<script src="uk.js"></script>
+<script src="arg.js"></script>
  
 <script>
 
 DEGREE = 0.017453292519943295769
 EARTH_RADIUS = 3958.761
+
+/**
+
+Converts a list of points representing an equiangular map into a kdtree. Input object parameters:
+
+height: map height
+width: map width
+points: the list of points in the map
+
+*/
+
+function points2Tree(obj) {
+
+  var treepts = []
+
+  console.log("OBJ", obj);
+
+  for (i in obj.points) {
+
+ // convert point number to pixel and add 0.5 for centering (top/left pixels are 0)
+
+    var pixx = obj.points[i]%obj.width + 0.5
+    var pixy = Math.floor(obj.points[i]/obj.width) + 0.5
+
+    // now, convert pixels to lng and lat
+
+    var lng = -180 + pixx/obj.width*360
+    var lat = 90 - pixy/obj.height*180
+
+    // add to treepts
+
+    treepts.push({lat: lat*DEGREE, lng: lng*DEGREE})
+  }
+
+ return new kdTree(treepts, distance, ["lat", "lng"])
+}
 
 // create a single canvas object used to generate PNGs
 
@@ -35,16 +73,18 @@ function latLngGrid2PNG(obj) {
 
  // distance
 
-// console.log(`CHECKING AGAINST lat,lng ${obj.lat} and ${obj.lng}`);
- nearest = tree.nearest({lat: obj.lat*DEGREE, lng: obj.lng*DEGREE}, 1);
- nearest = nearest[0][1];
+ usnear = ustree.nearest({lat: obj.lat*DEGREE, lng: obj.lng*DEGREE}, 1)[0][1]
+ uknear = uktree.nearest({lat: obj.lat*DEGREE, lng: obj.lng*DEGREE}, 1)[0][1]
+ argnear = argtree.nearest({lat: obj.lat*DEGREE, lng: obj.lng*DEGREE}, 1)[0][1]
 
  // put some stuff on it
 
   let printArray = [
    `Longitude: ${obj.lng}`,
    `Latitude: ${obj.lat}`,
-   `Distance: ${nearest} miles`,
+   `US: ${usnear} miles`,
+   `UK: ${uknear} miles`,
+   `ARG: ${argnear} miles`,
    `EOF`
   ];
 
@@ -54,24 +94,17 @@ function latLngGrid2PNG(obj) {
     ctx.fillText(printArray[i], 5, fontSize*(i+1));
   }
 
-// ctx.fillText(`You are ${nearest} miles from the USA`, 5, 25)
-
  return canvas.toDataURL('image/png')
 
 }
 
-let icon = L.icon({iconUrl: 'red.png', iconSize: [10,10]});
 
 function distance(a, b) {
-// val = 1 - Math.cos(a.lat)*Math.cos(b.lat)*Math.cos(a.lng-b.lng) - Math.sin(a.lat)*Math.sin(b.lat);
 
   val = EARTH_RADIUS*Math.acos(Math.cos(a.lat)*Math.cos(b.lat)*Math.cos(a.lng-b.lng) + Math.sin(a.lat)*Math.sin(b.lat))
 
-// console.log("A",a,"B",b,"VAL", val);
  return val
 }
-
-treepts = []
 
 const map = L.map('map').setView([37.8, -96], 4);
 
@@ -80,78 +113,11 @@ const map = L.map('map').setView([37.8, -96], 4);
 map.on('zoomend', redraw_map);
 map.on('moveend', redraw_map);
 
-// currently cheating and hardcoding width and height
+// create our trees
 
-width = 43200
-height = 21600
-
-var count = 0;
-
-for (i in points) {
-
- // convert point number to pixel and add 0.5 for centering (top/left pixels are 0)
-
- var pixx = points[i]%width + 0.5
- var pixy = Math.floor(points[i]/width) + 0.5
-
- // now, convert pixels to lng and lat
-
- var lng = -180 + pixx/width*360
- var lat = 90 - pixy/height*180
-
- // add to treepts
-
- count++
-
-// if (count % 1000 == 0) {
-//  console.log(`Pushing ${lat} lat and ${lng} to treepts`);
-// }
-
-// console.log(`Pushing ${lat} lat and ${lng} to treepts`);
- treepts.push({lat: lat*DEGREE, lng: lng*DEGREE})
-
-// stop at 100
-
-// if (count > 100) {break;}
-
- // KLUDGE: can't map all points, so this cuts number a bit
-
- // if (++count % 5 != 0) {continue;}
-
- // if (++count % 25 != 0) {continue;}
-
- // size of a pixel in degrees
-
- // var pixsize = 360/width
-
- // L.rectangle([[lat-pixsize/2, lng-pixsize/2], [lat+pixsize/2, lng+pixsize/2]]).addTo(map)
-
-// L.rectangle([[y-180/1350, x-360/1350/2], [y+180/1350,x+360/1350/2]]).addTo(map)
-
-// L.rectangle([[34, -107], [36, -105]]).addTo(map)
-
-
-// console.log("PXY", points[i], lng, lat)
-
-// if (count++ > 25) {break;}
-
-}
-
-// console.log(treepts)
-
-// create our tree
-
-var tree = new kdTree(treepts, distance, ["lat", "lng"]);
-
-// console.log(tree)
-
-for (i=0; i<15; i++) {
- for (j=0; j<15; j++) {
-//  console.log(tree.nearest({lat: (35+i/10.)*DEGREE, lng: (j/10.-106)*DEGREE}, 1));
-//  console.log("IJ",i,j)
- }
-}
-
+var ustree = points2Tree(usa)
+var uktree = points2Tree(uk)
+var argtree = points2Tree(arg)
 
 function initialize(){
  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
