@@ -3,6 +3,18 @@ from math import sqrt, pi, tau, sin, cos, asin
 
 import matplotlib.pyplot as plt
 from PIL import Image, ImageFilter
+import PIL
+import time
+
+# works just like the print function but at the end it adds the time between the present and the last call
+class print_time_flag:
+    t = time.time()
+
+    def __init__(self, *args):
+        new_t = time.time()
+        print(*args, new_t-print_time_flag.t)
+        print_time_flag.t = new_t
+
 
 # error margin within distances in candidate pixels:
 #   distance could be added or substracted by sqrt(2)
@@ -18,10 +30,20 @@ from PIL import Image, ImageFilter
 #    maybe this is the (a) formula:  # may be not the theoretical best
 #     error_margin = 2 * sqrt(2) *  .....
 
+### if PIL complains, add this line ###
+# PIL.Image.MAX_IMAGE_PIXELS = 536870912  # 16384 * 32768
+
+max_width = 2048
+# max_width = 32768
+
+save_name = "ARG_US1_GB1"
+save_images = True
+show_images = False
+
 images_names = [
-    "RASTER/ARG-raster-2048.png",
-    "RASTER/US1-raster-2048.png",
-    "RASTER/GB1-raster-2048.png",
+    f"RASTER/ARG-raster-{max_width}.png",
+    f"RASTER/US1-raster-{max_width}.png",
+    f"RASTER/GB1-raster-{max_width}.png",
 ]
 images_are_filled = True
 
@@ -32,32 +54,32 @@ def load_images(file_names):
         image = Image.open(file_name)
 
         images.append(np.array(image))
-        # images.append(image)
 
-    return images
+    return np.array(images)
 
 
 full_res_images = load_images(images_names)
 
-
+# todo: make this a class or something to take the functions away from their parent function
+# todo: if images is a numpy array I don't need the for loop, I can do them all at once
 def remove_filling(images):
     def get_expanded_image(img):
         expanded_image = np.empty((img.shape[0] + 2, img.shape[1] + 2), dtype=img.dtype)
         expanded_image[1:-1, 1:-1] = img
-        expanded_image[0, 1:-1] = img[0, :]  # this should be shifted by pi, but since these are the poles
+        expanded_image[ 0, 1:-1] = img[ 0, :]  # this should be shifted by pi, but since these are the poles
         expanded_image[-1, 1:-1] = img[-1, :]  # the horizontal distance is insignificant or even null
-        expanded_image[1:-1, 0] = img[:, -1]
-        expanded_image[1:-1, -1] = img[:, 0]
+        expanded_image[1:-1,  0] = img[:, -1]
+        expanded_image[1:-1, -1] = img[:,  0]
         # careful with corners
         return expanded_image
 
     def convolute(img):
         expanded_image = get_expanded_image(img)
         return img & ~(
-                expanded_image[:-2, 1:-1] &
-                expanded_image[2:, 1:-1] &
-                expanded_image[1:-1, :-2] &
-                expanded_image[1:-1, 2:]
+                expanded_image[ :-2, 1:-1] &
+                expanded_image[2:  , 1:-1] &
+                expanded_image[1:-1,  :-2] &
+                expanded_image[1:-1, 2:  ]
         )
 
     for i, image in enumerate(images):
@@ -71,35 +93,52 @@ if images_are_filled:
     remove_filling(full_res_images)
 
 
+# print("CAREFUL, TEST IMAGES")
+# full_res_images = np.array([
+#     np.zeros((1024, 2048), dtype="bool"),
+#     np.zeros((1024, 2048), dtype="bool"),
+#     # np.zeros((1024, 2048), dtype="bool")
+# ])
+# full_res_images[0, 500,  500] = 1
+# full_res_images[1, 500, 1500] = 1
+# # full_res_images[2][150, 300] = 1
+
+
+
+
+
+
 # Image.fromarray(full_res_images2[0] & ~full_res_images[0]).show()
 # Image.fromarray(full_res_images2[0]).show()
 
 # full_res_images[0].show()
 # exit()
 
+def is_pow2(n):
+    return n & (n - 1) == 0  # got this clever trick from https://stackoverflow.com/questions/57025836/how-to-check-if-a-given-number-is-a-power-of-two
 
 def create_lower_resolution_images(full_res_images):
-    def is_pow2(n):
-        return n & (
-                    n - 1) == 0  # got this clever trick from https://stackoverflow.com/questions/57025836/how-to-check-if-a-given-number-is-a-power-of-two
 
     # make sure that the ratio is 2x1, resolution is a power of 2, and the shape is the same for all images
     # should this check be made in the beginning of the program instead?
+    # todo: if full_res_images is a np array, I need to move these checks somewhere else
     shape = full_res_images[0].shape
     h, w = shape
     assert h * 2 == w and is_pow2(h) and is_pow2(w)
     for img in full_res_images:
         assert img.shape == shape
 
-    images = [[*full_res_images]]  # careful I think this isn't clonning the arrays
+    images = [np.copy(full_res_images)]  # careful I think this isn't clonning the arrays
 
     # "max pooling"
     while h > 1:
         h //= 2
         w //= 2
+        print(images[-1].shape)
         images_2x = images[-1]
         images.append([])
 
+        # todo: if full_res_images is a np array, now I can do all this at once
         for image_2x in images_2x:
             image_2x = image_2x.reshape(h, 2, w, 2)  # this allows me to split the pixels in 4
             image_1x = (
@@ -109,6 +148,7 @@ def create_lower_resolution_images(full_res_images):
                     image_2x[:, 1, :, 1]
             )
             images[-1].append(image_1x)
+        images[-1] = np.array(images[-1])
 
         # Image.fromarray(images[-1][0]).show()
 
@@ -116,33 +156,6 @@ def create_lower_resolution_images(full_res_images):
 
 
 all_res_images = create_lower_resolution_images(full_res_images)
-
-
-# # todo: check if this function is working right
-# # TODO: is this function necessary? do I need to calculate every single pixel? I think this old approach isn't convenient anymore
-# #         perhaps I'll need some storing variable tho, in order to prevent recalculating values
-# def create_map_3d(height, width):
-#     lat  = (np.arange(height, dtype="float32") * (  pi / height) - pi/2 ).reshape(-1,  1)
-#     long = (np.arange(width,  dtype="float32") * (2*pi / width )        ).reshape( 1, -1)
-#
-#     map_3d = np.empty((height, width, 3), dtype="float32")
-#     x = np.cos(long) * np.cos(lat)
-#     y = np.sin(lat)  * np.ones((height, width), dtype="float32")
-#     z = np.sin(long) * np.cos(lat)
-#     map_3d[:, :, 0] = x
-#     map_3d[:, :, 1] = y
-#     map_3d[:, :, 2] = z
-#
-#     return map_3d
-# map_3d = create_map_3d(height, width)
-
-def array_3d_distance2(a, b):  # squared distance
-    v = a - b
-    return v[:, 0] * v[:, 0] + \
-           v[:, 1] * v[:, 1] + \
-           v[:, 2] * v[:, 2]
-    # maybe use @ operator for matrix multiplication?
-
 
 # active pixels contain the coordinates of themselves and an array with all the candidate "owners"
 # candidates have 4 coordinates, the image index, y, x, and the last one is use to later compute the distance
@@ -159,6 +172,7 @@ class ActivePixel:
         self.candidates = candidates
 
 
+# list comprehension
 active_pixels = [
     ActivePixel(
         coords=np.array([0, x]),
@@ -167,11 +181,12 @@ active_pixels = [
             for img_i in range(len(full_res_images))
             for x2 in range(2)
             if all_res_images[0][img_i][0, x2]
-        ])
+        ], dtype="float32")
     )
     for x in range(2)
 ]
 
+# regular for loops
 active_pixels = []
 for x in range(2):
     active_pixel_coords = np.array([0, x])
@@ -184,13 +199,13 @@ for x in range(2):
 
     active_pixels.append(ActivePixel(
         active_pixel_coords,
-        np.array(active_pixel_candidates)
+        np.array(active_pixel_candidates, dtype="float32")
     ))
 # careful that the distance value starts at 0 which isn't always true. it will need to be updated later in the code.
 
-for x in range(2):
-    print(active_pixels[x][1])
-exit()
+# for x in range(2):
+#     print(active_pixels[x].candidates)
+# exit()
 
 # a possible optimization is to save the relative coordinates of the candidates (nvm, I need them to get the 3d ones? (I'm sleepy already))
 # idea for the future, store things vertically instead of horizontally
@@ -212,21 +227,9 @@ exit()
 #    and next to it all the candidates..... well, actually if I do this I'll calculate too much
 #    space isn't a problem, processing is
 
-# def get_3d_coords_from_array(arr):
-#     lat  = (np.arange(height, dtype="float32") * (pi / height) - pi / 2).reshape(-1, 1)
-#     long = (np.arange(width,  dtype="float32") * (2*pi / width )        ).reshape( 1, -1)
-#
-#     d =
-#
-#     map_3d = np.empty((height, width, 3), dtype="float32")
-#     x = np.cos(long) * np.cos(lat)
-#     y = np.sin(lat)  * np.ones((height, width), dtype="float32")
-#     z = np.sin(long) * np.cos(lat)
-#     map_3d[:, :, 0] = x
-#     map_3d[:, :, 1] = y
-#     map_3d[:, :, 2] = z
-#
-#     return map_3d
+
+
+
 
 # keeps track of what parts of the current res image belong to which polygon group
 drawing_grid = np.array(
@@ -236,50 +239,66 @@ drawing_grid = np.array(
 )
 
 
-def calculate_active_pixel_candidates_distance_3D(active_pixel, res):
-    lat  = pi * active_pixel.coords[0] / res - pi / 2
-    long = pi * active_pixel.coords[1] / res - pi  # it's not 2 pi, it get's cancelled with x
-    shift = np.array([-pi / 2, -pi])
+# todo: try to save distances or 3d coords if it improves performance
 
-    # 2D:
-    active_pixel_lat_long = (pi / res) * active_pixel.coords + shift
-    candidates_lat_long   = (pi / res) * active_pixel.candidates[:, 1:3] + shift.reshape(1, 2)
+def split_candidate_pixels(active_pixels, images_res_x):
+    for active_pixel in active_pixels:
+        # print("in split for loop")
+        active_pixel.candidates[:,1:3] *= 2
+        new_candidates = []
+        for y in range(2):
+            for x in range(2):
+                new_candidates.append(np.copy(active_pixel.candidates))
+                new_candidates[-1][:, 1:3] += [y, x]  # todo: does the broadcasting work correctly?
 
-    # 3D:
-    active_pixel_yxz = np.array([
-        sin(active_pixel_lat_long[0]),
-        cos(active_pixel_lat_long[0]) * sin(active_pixel_lat_long[1]),
-        cos(active_pixel_lat_long[0]) * cos(active_pixel_lat_long[1])
-    ])
-    candidates_yxz = None
-    # TODO: INCOMPLETE
+        active_pixel.candidates = np.concatenate(
+            new_candidates,
+            axis=0
+        )
 
+        # TODO: this following filtering may make more sense to belong in a separate function??
+        # remove candidate pixels that don't exist
+        active_pixel.candidates = active_pixel.candidates[images_res_x[
+            active_pixel.candidates[:, :3].T[0].astype("int32"),
+            active_pixel.candidates[:, :3].T[1].astype("int32"),
+            active_pixel.candidates[:, :3].T[2].astype("int32")],
+        ]
 
-def get_threshold(min_distance, res_max_error):
-    # it depends on how parallel the sphere surface is with respect to the line beween the two points
-    return min_distance + res_max_error * cos(asin(min_distance / 2))
-    # perhaps should do "+ cos(asin(min_distance+()/2))"
+        # print(active_pixel.candidates)
 
+def split_active_pixels(active_pixels):
+    return [
+        ActivePixel(active_pixel.coords * 2 + np.array([y, x]), np.copy(active_pixel.candidates))
+        for active_pixel in active_pixels
+        for y in range(2)
+        for x in range(2)
+    ]
 
-def filter_candidates(active_pixel, res_max_error):
-    min_distance = min(active_pixel.candidates[:, 3])
-    threshold = get_threshold(min_distance, res_max_error)
-    active_pixel.candidates = active_pixel.candidates[active_pixel.candidates[:, 3] <= threshold]
+def incrase_drawing_grid_res(drawing_grid):
+    expanded_drawing_grid = np.empty((drawing_grid.shape[0], 2,
+                                      drawing_grid.shape[1], 2), dtype="int8")
+    expanded_drawing_grid[:, 0, :, 0] = drawing_grid
+    expanded_drawing_grid[:, 0, :, 1] = drawing_grid
+    expanded_drawing_grid[:, 1, :, 0] = drawing_grid
+    expanded_drawing_grid[:, 1, :, 1] = drawing_grid
+    return expanded_drawing_grid.reshape(drawing_grid.shape[0] * 2,
+                                         drawing_grid.shape[1] * 2)
 
+def filter_and_conquer_active_pixels(active_pixels, res):
+    res_max_error = get_res_max_error(res)
 
-def all_candidates_belong_to_the_same_polygon_group(candidates):
-    return np.all(candidates[:, 0] == candidates[0, 0])
+    new_active_pixels = []
+    for active_pixel in active_pixels:
+        if not try_conquer(active_pixel, res, res_max_error):
+            new_active_pixels.append(active_pixel)
+
+    return new_active_pixels
 
 
 def get_res_max_error(res):
     pixel_distance = pi / res
     max_error = 2 * sqrt(2) * pixel_distance
     return max_error
-
-
-def conquer_pixel(drawing_grid, active_pixel):
-    drawing_grid[tuple(active_pixel.coords)] = active_pixel.candidates[0, 0]
-
 
 def try_conquer(active_pixel, res, res_max_error):
 
@@ -292,54 +311,128 @@ def try_conquer(active_pixel, res, res_max_error):
     return False
 
 
-def filter_and_conquer_active_pixels(active_pixels, res):
-    res_max_error = get_res_max_error(res)
+def calculate_active_pixel_candidates_distance_3D(active_pixel, res):
 
-    return [
-        active_pixel
-        for active_pixel in active_pixels
-        if not try_conquer(active_pixel, res, res_max_error)
-    ]
+    shift = np.array([-pi / 2, -pi])
 
-def split_active_pixels(active_pixels):
-    return [
-        ActivePixel(active_pixel.coords * 2 + np.array([y, x]), np.copy(active_pixel.candidates))
-        for active_pixel in active_pixels
-        for y in range(2)
-        for x in range(2)
-    ]
+    # 2D:
+    active_pixel_lat_long = (pi / res) * active_pixel.coords + shift
+    candidates_lat_long   = (pi / res) * active_pixel.candidates[:, 1:3] + shift.reshape(1, 2)
 
-def split_candidate_pixels(active_pixels):
-    for active_pixel in active_pixels:
-        active_pixel.candidates[:,1:3] *= 2
-        new_candidates = []
-        for y in range(2):
-            for x in range(2):
-                new_candidates.append(np.copy(active_pixel.candidates))
-                new_candidates[-1][1:3] += np.array([y, x])  # todo: does the broadcasting work correctly?
+    # 3D:
+    active_pixel_yxz = np.array([
+        sin(active_pixel_lat_long[0]),
+        cos(active_pixel_lat_long[0]) * sin(active_pixel_lat_long[1]),
+        cos(active_pixel_lat_long[0]) * cos(active_pixel_lat_long[1])
+    ])
 
-        active_pixel.candidates = np.concatenate(
-            new_candidates,
-            axis=0
-        )
+    candidates_yxz = np.empty((active_pixel.candidates.shape[0], 3), dtype=active_pixel.candidates.dtype)
+    candidates_yxz[:, 0] = np.sin(candidates_lat_long[:, 0])
+    candidates_yxz[:, 1] = np.cos(candidates_lat_long[:, 0]) * np.sin(candidates_lat_long[:, 1])
+    candidates_yxz[:, 2] = np.cos(candidates_lat_long[:, 0]) * np.cos(candidates_lat_long[:, 1])
 
-def incrase_drawing_grid_res(drawing_grid):
-    expanded_drawing_grid = np.empty((drawing_grid.shape[0], 2,
-                                      drawing_grid.shape[1], 2), dtype="int8")
-    expanded_drawing_grid[:, 0, :, 0] = drawing_grid
-    expanded_drawing_grid[:, 0, :, 1] = drawing_grid
-    expanded_drawing_grid[:, 1, :, 0] = drawing_grid
-    expanded_drawing_grid[:, 1, :, 1] = drawing_grid
-    return expanded_drawing_grid.reshape(drawing_grid.shape[0] * 2,
-                                         drawing_grid.shape[1] * 2)
+    active_pixel.candidates[:, 3] = array_3d_distance2(candidates_yxz, active_pixel_yxz)
 
-# increase resolution by 2
-for res in (2 ** i for i in range(len(all_res_images))):
-    split_candidate_pixels(active_pixels)  # todo: later try changing the order of these two and see if one is faster than the other
+
+def array_3d_distance2(a, b):  # squared distance
+    v = a - b
+    return v[:, 0] * v[:, 0] + \
+           v[:, 1] * v[:, 1] + \
+           v[:, 2] * v[:, 2]
+    # todo: maybe use @ operator for matrix multiplication?
+
+def filter_candidates(active_pixel, res_max_error):
+    # careful here, because distance is squared!
+    min_distance2 = min(active_pixel.candidates[:, 3])
+    threshold = get_threshold(min_distance2, res_max_error)
+    # print()
+    # print("previous  candidates count:", active_pixel.candidates.shape[1])
+    # print(active_pixel.candidates)
+    active_pixel.candidates = active_pixel.candidates[active_pixel.candidates[:, 3] <= threshold]
+    # print("posterior candidates count:", active_pixel.candidates.shape[1])
+    # print(active_pixel.candidates)
+    # print()
+
+def get_threshold(min_distance2, res_max_error):
+    # note: distance is squared, and assumes the d column is also squared
+    # it depends on how parallel the sphere surface is with respect to the line beween the two points
+    min_distance = sqrt(min_distance2)
+    # print("threshold", min_distance2, res_max_error, cos(asin(min_distance / 2)))
+    # print("threshold", min_distance2, res_max_error, min_distance + res_max_error * cos(asin(min_distance / 2)))
+    return (min_distance + res_max_error * cos(asin(min_distance / 2)))**2
+
+def all_candidates_belong_to_the_same_polygon_group(candidates):
+    return np.all(candidates[:, 0] == candidates[0, 0])
+
+def conquer_pixel(drawing_grid, active_pixel):
+    drawing_grid[tuple(active_pixel.coords)] = active_pixel.candidates[0, 0]
+
+
+drawing_image = None
+
+def draw_image(drawing_grid):
+    polygon_groups_colors = np.array([
+        [000, 200, 255],
+        [220, 100, 120],
+        [100, 100, 255],
+        [000, 000, 000]
+
+    ], dtype="uint8")
+
+    image_grid = polygon_groups_colors[drawing_grid.reshape(-1)].reshape(*drawing_grid.shape, 3)
+    drawing_image = Image.fromarray(image_grid)
+    return drawing_image
+
+def draw_polygons_over_image(drawing_image, polygons, color):
+    grid = np.array(drawing_image)
+    grid[polygons[0]] = grid[polygons[0]] // 2 + [127, 127, 127]
+    grid[polygons[1]] = grid[polygons[1]] // 2 + [127, 127, 127]
+    grid[polygons[2]] = grid[polygons[2]] // 2 + [127, 127, 127]
+
+    return Image.fromarray(grid)
+
+
+# todo: which res should it start with?
+# for res, images_res_x in [(2**i, all_res_images[i]) for i in range(len(all_res_images))]:
+
+if save_images:
+    drawing_image = draw_image(drawing_grid)
+    drawing_image = draw_polygons_over_image(drawing_image, all_res_images[0], color=[0, 0, 0])
+    drawing_image.save(f"{save_name}_{1}x.png")
+
+
+for i in range(1, len(all_res_images)):
+    res = 2**i
+
+    print("res", res)
+
+    print_time_flag("start")
+
+    split_candidate_pixels(active_pixels, all_res_images[i])  # todo: later try changing the order of these two and see if one is faster than the other
+    print_time_flag("split_candidate_pixels")
+
     active_pixels = split_active_pixels(active_pixels)
+    print_time_flag("split_active_pixels")
+
     drawing_grid  = incrase_drawing_grid_res(drawing_grid)
+    print_time_flag("incrase_drawing_grid_res")
 
     active_pixels = filter_and_conquer_active_pixels(active_pixels, res)
+    print_time_flag("filter_and_conquer_active_pixels")
+
+    drawing_image = draw_image(drawing_grid)
+    drawing_image = draw_polygons_over_image(drawing_image, all_res_images[i], color=[0, 0, 0])
+    if save_images:
+        drawing_image.save(f"{save_name}_{res}x.png")
+    if show_images:
+        drawing_image.show()
+
+
+
+
+
+
+
 
 
 
