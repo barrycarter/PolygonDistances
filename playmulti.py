@@ -316,7 +316,12 @@ TODO: check to see if the min applies to the whole tile
     # this is the angle length across the whole tile and is therefore MUCH larger than the minimum value here which would be the half diagonal length as a straight line
 
     delta = 2*np.pi/2**obj['z']
-    print("DELTA: ",delta)
+
+# THIS IS WRONG!!!!!!!!!!!
+
+    delta = delta/2.
+
+#    print("DELTA: ",delta)
 
     x = np.cos(lat)*np.cos(lng)
     y = np.cos(lat)*np.sin(lng)
@@ -327,8 +332,12 @@ TODO: check to see if the min applies to the whole tile
     for i in trees:
         dists.append((i.query([x,y,z], k=1)[0]))
 
-    print("DISTS", dists)
-    print(np.argsort(dists))
+    sorted = np.argsort(dists)
+
+    if (dists[sorted[1]] - dists[sorted[0]] > delta):
+        return sorted[0]
+
+    return -1
 
 def tile2LngLat(**obj):
 
@@ -385,6 +394,47 @@ def play9():
 
 ######### TESTING BELOW THIS LINE, NO MORE FUNCTIONS PLEASE ########
 
+trees = []
+
+for i in ["ARG", "GB1", "US1"]:
+    with open(f'{i}.tree', "rb") as f:
+        trees.append(pickle.load(f))
+
+tiles = [{'x': 0, 'y': 0, 'z': 0}]
+
+while (tiles):
+    tile = tiles.pop(0)
+ #   print("ALPHA", tile)
+    val = slippyTile2Closest(x=tile['x'], y=tile['y'], z=tile['z'], trees = trees)
+    if val >= 0:
+        print(tile,val)
+        continue
+
+    print(tile, "UNRESOLVED")
+
+    # couldn't find country, add 4 child tiles
+    tiles.append({'x': tile['x']*2, 'y': tile['y']*2, 'z': tile['z']+1})
+    tiles.append({'x': tile['x']*2+1, 'y': tile['y']*2, 'z': tile['z']+1})
+    tiles.append({'x': tile['x']*2, 'y': tile['y']*2+1, 'z': tile['z']+1})
+    tiles.append({'x': tile['x']*2+1, 'y': tile['y']*2+1, 'z': tile['z']+1})
+
+#    print(tiles)
+
+# tile = tiles[0]
+
+# print(slippyTile2Closest(x=tile['x'], y=tile['y'], z=tile['z'], trees = trees))
+
+exit()
+
+print(slippyTile2Closest(z=11, x=417, y=810, trees = trees))
+print(slippyTile2Closest(z=6, x=21, y=39, trees = trees))
+print(slippyTile2Closest(z=8, x=82, y=171, trees = trees))
+print(slippyTile2Closest(z=9, x=164, y=342, trees = trees))
+print(slippyTile2Closest(z=0, x=0, y=0, trees = trees))
+print(slippyTile2Closest(z=9, x=165, y=229, trees = trees))
+
+exit()
+
 play9()
 
 exit()
@@ -415,18 +465,6 @@ with open('/tmp/tree.txt', 'wb') as f:
     pickle.dump(tree, f)
 
 exit()
-
-trees = [raster2KDTree(raster = "RASTER/US1-raster-43200.png"),
-         raster2KDTree(raster = "RASTER/GB1-raster-43200.png"),
-         raster2KDTree(raster = "RASTER/ARG-raster-43200.png")
-         ]
-
-slippyTile2Closest(z=11, x=417, y=810, trees = trees)
-slippyTile2Closest(z=6, x=21, y=39, trees = trees)
-slippyTile2Closest(z=8, x=82, y=171, trees = trees)
-slippyTile2Closest(z=9, x=164, y=342, trees = trees)
-slippyTile2Closest(z=0, x=0, y=0, trees = trees)
-slippyTile2Closest(z=9, x=165, y=229, trees = trees)
 
 # print(trees)
 
