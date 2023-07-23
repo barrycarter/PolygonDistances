@@ -21,6 +21,8 @@ from bclib import *
 
 Image.MAX_IMAGE_PIXELS = 10**9
 
+DEGREE = np.pi/180
+
 # longest segment finding?
 
 def play8():
@@ -296,6 +298,74 @@ raster: the filename containing the raster map
 
     return cKDTree(ptsAll)
 
+def equiRectangularTile2Closest(**obj):
+
+    """
+
+Given a spherical rectangle, and list of CKDTrees, determine which of the CDKTrees (points) are closest to the anywhere in the tile or unresolved it if can't be determined
+
+slat, nlat, wlng, elng: rectangle coordinates
+trees: a list of CKDTrees
+
+Assumptions: wlng < elng, slat < nlat, and the rectangle crosses neither the equator nor the antimeridian, units are radians
+
+    """
+
+    # TODO: there has to be a better way to pass objects with extracting and rolling up like this
+
+    # extract variables
+
+    nlat, slat, wlng, elng, trees = [obj['nlat'], obj['slat'], obj['wlng'], obj['elng'], obj['trees']]
+
+    # height is the difference in latitudes
+    
+    height = nlat-slat
+
+    print("HEIGHT", (nlat-slat)/DEGREE)
+
+    # width is bounded by the cos of the latitude closer to the equator
+
+    width = (elng-wlng)*np.cos(np.min(np.abs([nlat, slat])))
+
+    # special case for equator crossing
+
+    if slat < 0 and nlat > 0:
+        width = elng-wlng
+
+    # the max distance from center assuming Pythag (which overestimates which is fine)
+
+    maxDist = np.sqrt(height**2 + width**2)
+
+    # the central lat and lng
+
+    clat = (nlat+slat)/2
+    clng = (wlng+elng)/2
+
+    # convert to xyz coords
+    x = np.cos(clat)*np.cos(clng)
+    y = np.cos(clat)*np.sin(clng)
+    z = np.sin(clat)
+
+    dists = []
+    points = []
+
+    for i in trees:
+        dists.append((i.query([x,y,z], k=1)[0]))
+        points.append((i.query([x,y,z], k=1)[1]))
+
+    sorted = np.argsort(dists)
+
+    if ((dists[sorted[1]] - dists[sorted[0]] > maxDist)):
+        return sorted[0]
+
+    # if we're less than 500m, just perma-unresolved
+
+    if maxDist < 2*np.pi/80000:
+        return -1
+
+    # -2 means currently unresolved but may resolve later
+    return -2
+
 def slippyTile2Closest(**obj):
 
     """
@@ -313,13 +383,15 @@ TODO: check to see if the min applies to the whole tile
     lat = latLng['lat']
     lng = latLng['lng']
 
+#    print("LATLGN",lat,lng)
+
     # this is the angle length across the whole tile and is therefore MUCH larger than the minimum value here which would be the half diagonal length as a straight line
 
     delta = 2*np.pi/2**obj['z']
 
-# THIS IS WRONG!!!!!!!!!!!
+    # TODO: this MAY BE WRONG
 
-    delta = delta/2.
+    delta = 2*np.pi/2**obj['z']*np.cos(lat)/np.sqrt(2)
 
 #    print("DELTA: ",delta)
 
@@ -328,13 +400,17 @@ TODO: check to see if the min applies to the whole tile
     z = np.sin(lat)
 
     dists = []
+    points = []
 
     for i in trees:
         dists.append((i.query([x,y,z], k=1)[0]))
+        points.append((i.query([x,y,z], k=1)[1]))
 
     sorted = np.argsort(dists)
 
-    if (dists[sorted[1]] - dists[sorted[0]] > delta):
+    if ((dists[sorted[1]] - dists[sorted[0]] > delta) or obj['z'] >= 15):
+#    if (dists[sorted[1]] - dists[sorted[0]] > delta):
+#        print("PS", sorted[0], points[sorted[0]])
         return sorted[0]
 
     return -1
@@ -400,23 +476,44 @@ for i in ["ARG", "GB1", "US1"]:
     with open(f'{i}.tree', "rb") as f:
         trees.append(pickle.load(f))
 
-tiles = [{'x': 0, 'y': 0, 'z': 0}]
+# order is slat, nlat, wlng, elng
+
+tiles = [{'slat': -90*DEGREE, 'nlat': 90*DEGREE, 'wlng': -180*DEGREE, 'elng': 180*DEGREE}]
+
+print(tiles)
 
 while (tiles):
+
     tile = tiles.pop(0)
- #   print("ALPHA", tile)
-    val = slippyTile2Closest(x=tile['x'], y=tile['y'], z=tile['z'], trees = trees)
-    if val >= 0:
+
+    val = equiRectangularTile2Closest(slat = tile['slat'], nlat = tile['nlat'], wlng = tile['wlng'], elng = tile['elng'], trees=trees)
+
+    if val >= -1:
         print(tile,val)
         continue
 
     print(tile, "UNRESOLVED")
 
     # couldn't find country, add 4 child tiles
-    tiles.append({'x': tile['x']*2, 'y': tile['y']*2, 'z': tile['z']+1})
-    tiles.append({'x': tile['x']*2+1, 'y': tile['y']*2, 'z': tile['z']+1})
-    tiles.append({'x': tile['x']*2, 'y': tile['y']*2+1, 'z': tile['z']+1})
-    tiles.append({'x': tile['x']*2+1, 'y': tile['y']*2+1, 'z': tile['z']+1})
+
+    for i in range(2):
+        for j in range(2): 
+            tiles.append(
+                {'slat': tile['slat'] + i/2*(tile['nlat']-tile['slat']),
+                 'nlat': tile['nlat'] - (1-i)/2*(tile['nlat']-tile['slat']),
+                 'wlng': tile['wlng'] + j/2*(tile['elng']-tile['wlng']),
+                 'elng': tile['elng'] - (1-j)/2*(tile['elng']-tile['wlng'])
+                 })
+
+#    print("TILES", tiles)
+
+exit()
+
+
+# {'x': tile['x']*2, 'y': tile['y']*2, 'z': tile['z']+1})
+#    tiles.append({'x': tile['x']*2+1, 'y': tile['y']*2, 'z': tile['z']+1})
+#    tiles.append({'x': tile['x']*2, 'y': tile['y']*2+1, 'z': tile['z']+1})
+#    tiles.append({'x': tile['x']*2+1, 'y': tile['y']*2+1, 'z': tile['z']+1})
 
 #    print(tiles)
 
