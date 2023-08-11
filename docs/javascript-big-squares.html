@@ -1,0 +1,215 @@
+<link rel="stylesheet" href="includes/leaflet.css" />
+<script src="includes/leaflet.js"></script>
+<script src="includes/kdTree-min.js"></script>
+<body onload="initialize()">
+  <div id="map" style="height: 600px;"></div>
+
+<script src="usa.js"></script>
+<script src="uk.js"></script>
+<script src="arg.js"></script>
+ 
+<script>
+
+DEGREE = 0.017453292519943295769
+EARTH_RADIUS = 3958.761
+
+zoomDegrees = [0, 0, 60, 30, 15, 8, 4, 2, 1, 30/60, 15/60, 8/60, 4/60, 2/60,
+               1/60, 30/3600, 15/3600, 8/3600, 4/3600, 2/3600, 1/3600,
+               1/3600/3, 1/3600/9];
+
+// for (i in zoomDegrees) {
+// zoomDegrees[i] /= 2;
+// }
+
+/**
+
+Converts a list of points representing an equiangular map into a kdtree. Input object parameters:
+
+height: map height
+width: map width
+points: the list of points in the map
+
+*/
+
+function points2Tree(obj) {
+
+  var treepts = []
+
+  console.log("OBJ", obj);
+
+  for (i in obj.points) {
+
+ // convert point number to pixel and add 0.5 for centering (top/left pixels are 0)
+
+    var pixx = obj.points[i]%obj.width + 0.5
+    var pixy = Math.floor(obj.points[i]/obj.width) + 0.5
+
+    // now, convert pixels to lng and lat
+
+    var lng = -180 + pixx/obj.width*360
+    var lat = 90 - pixy/obj.height*180
+
+    // add to treepts
+
+    treepts.push({lat: lat*DEGREE, lng: lng*DEGREE})
+  }
+
+ return new kdTree(treepts, distance, ["lat", "lng"])
+}
+
+// create a single canvas object used to generate PNGs
+
+let canvas = document.createElement('canvas');
+
+/**
+
+Return the data URL of a PNG file for a given tile. Input object parameters:
+
+lng: the longitude of the west side of the grid tile
+lat: the latitude of the south side of the grid tile
+grid: the size of the grid in degrees
+
+*/
+
+function latLngGrid2PNG(obj) {
+
+ // set up the canvas
+
+ canvas.height = 1;
+ canvas.width = 1;
+ let ctx = canvas.getContext('2d');
+
+ // distance
+
+ console.log("START TREE");
+ usnear = ustree.nearest({lat: obj.lat*DEGREE, lng: obj.lng*DEGREE}, 1)[0][1]
+ uknear = uktree.nearest({lat: obj.lat*DEGREE, lng: obj.lng*DEGREE}, 1)[0][1]
+ argnear = argtree.nearest({lat: obj.lat*DEGREE, lng: obj.lng*DEGREE}, 1)[0][1]
+ console.log("END TREE");
+
+ if (usnear < uknear && usnear < argnear) {ctx.fillStyle = '#ff0000'}
+ if (uknear < usnear && uknear < argnear) {ctx.fillStyle = '#00ff00'}
+ if (argnear < uknear && argnear < usnear) {ctx.fillStyle = '#0000ff'}
+
+ ctx.fillRect(0, 0, 1, 1)
+
+ // put some stuff on it
+
+/*
+  let printArray = [
+   `Longitude: ${obj.lng}`,
+   `Latitude: ${obj.lat}`,
+   `US: ${usnear} miles`,
+   `UK: ${uknear} miles`,
+   `ARG: ${argnear} miles`,
+   `EOF`
+  ];
+
+  let fontSize = 20;
+  ctx.font = '20px Arial';
+  for (let i=0; i < printArray.length; i++) {
+    ctx.fillText(printArray[i], 5, fontSize*(i+1));
+  }
+*/
+
+ return canvas.toDataURL('image/png')
+
+}
+
+
+function distance(a, b) {
+
+  val = EARTH_RADIUS*Math.acos(Math.cos(a.lat)*Math.cos(b.lat)*Math.cos(a.lng-b.lng) + Math.sin(a.lat)*Math.sin(b.lat))
+
+ return val
+}
+
+const map = L.map('map').setView([37.8, -96], 4);
+
+// call redraw_map if someone moves or zooms
+
+map.on('zoomend', redraw_map);
+map.on('moveend', redraw_map);
+
+// create our trees
+
+var ustree = points2Tree(usa)
+var uktree = points2Tree(uk)
+var argtree = points2Tree(arg)
+
+function initialize(){
+ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+ redraw_map()
+}
+
+////// CUT PASTE STARTS HERE
+
+// this is ugly global variable
+
+items = []
+
+function redraw_map() {
+
+  let bounds = map.getBounds();
+  let z = map.getZoom();
+
+  // remove items (layers) I added last time
+  // TODO: only remove layers after adding new ones using 2 var flip
+
+  for (i in items) {items[i].remove()}
+
+  // grid sizes
+
+  if (z <= 1) {return;}
+
+  grid = zoomDegrees[z];
+
+
+  // get multiples of grid size
+
+  let south = Math.floor(bounds.getSouth()/grid)*grid;
+  let north = Math.ceil(bounds.getNorth()/grid)*grid;
+  let west = Math.floor(bounds.getWest()/grid)*grid;
+  let east = Math.ceil(bounds.getEast()/grid)*grid;
+
+
+  for (i=south; i<=north; i+=grid) {
+    items.push(L.polyline([[i, -180], [i, 180]], {weight: 1}).addTo(map));
+  }
+
+  for (i=west; i<=east; i+=grid) {
+    items.push(L.polyline([[-90, i], [90, i]], {weight: 1}).addTo(map));
+  }
+
+// nested stuff
+
+  for (i=south; i<=north; i+=grid) {
+    for (j=west; j<=east; j+=grid) {
+//      items.push(L.rectangle([[i, j], [i+grid, j+grid]]).addTo(map))
+ //      L.divIcon({html: 'hello world', position: [i, j]}).addTo(map);
+ // L.div('Hello, world!', [i,j]).addTo(map);
+ // L.DivOverlay({[fails]
+
+// L.imageOverlay("red.png", L.latLngBounds([[-180, -90], [180, 90]])).addTo(map);
+
+//  L.imageOverlay("red.png", L.latLngBounds([[i, j], [i+grid, j+grid]])).addTo(map);
+
+ items.push(L.imageOverlay(latLngGrid2PNG({lat: i+grid/2, lng: j+grid/2, grid: grid}), L.latLngBounds([[i, j], [i+grid, j+grid]]), {opacity: 0.5}).addTo(map));
+
+// items.push(L.imageOverlay("red.png", L.latLngBounds([[i+grid*0.49, j+grid*0.49], [i+grid*0.51, j+grid*0.51]])).addTo(map));
+
+
+//	  items.push(L.marker([i+grid/2,j+grid/2], {icon: icon, title: `z=${z},g=${gtext},x=${j+grid/2},y=${i+grid/2}\ni=${i},j=${j}\nn=${north},s=${south},e=${east},w=${west}`}).addTo(map));
+      }
+  }
+
+  return;
+}
+
+
+</script>
+
+
+</script>
+
+</body>

@@ -1,0 +1,227 @@
+<link rel="stylesheet" href="includes/leaflet.css" />
+<script src="includes/leaflet.js"></script>
+<script src="includes/kdTree-min.js"></script>
+<body onload="initialize()">
+  <div id="map" style="height: 600px;"></div>
+
+<script src="usa.js"></script>
+<script src="uk.js"></script>
+<script src="arg.js"></script>
+ 
+<script>
+
+DEGREE = 0.017453292519943295769
+EARTH_RADIUS = 3958.761
+
+zoomDegrees = [0, 0, 60, 30, 15, 8, 4, 2, 1, 30/60, 15/60, 8/60, 4/60, 2/60,
+               1/60, 30/3600, 15/3600, 8/3600, 4/3600, 2/3600, 1/3600,
+               1/3600/3, 1/3600/9];
+
+// the color mapping
+
+colors = {"us": "#8080ff", "uk": "#80ff80", "arg": "#ff8080"};
+
+for (i in zoomDegrees) {zoomDegrees[i] /= 8;}
+
+/**
+
+Converts a list of points representing an equiangular map into a kdtree. Input object parameters:
+
+height: map height
+width: map width
+points: the list of points in the map
+tag: if set, tag the points like this, otherwise tag = ""
+
+*/
+
+function points2Tree(obj) {
+
+  var treepts = []
+
+  console.log("OBJ", obj);
+
+  count = 0;
+
+  for (i in obj.points) {
+
+    count = count + 1;
+
+//    if (count > 100) {return;}
+
+ // convert point number to pixel and add 0.5 for centering (top/left pixels are 0)
+
+    var pixx = obj.points[i].point%obj.width + 0.5
+    var pixy = Math.floor(obj.points[i].point/obj.width) + 0.5
+
+    // now, convert pixels to lng and lat
+
+    var lng = -180 + pixx/obj.width*360
+    var lat = 90 - pixy/obj.height*180
+
+//    console.log("POINT", obj.points[i], "PIXX", pixx, "PIXY", pixy, "LNG", lng, "LAT", lat);
+
+    // add to treepts
+
+    treepts.push({lat: lat*DEGREE, lng: lng*DEGREE, tag: points[i].tag})
+  }
+ console.log("TREEPTS", treepts)
+ return new kdTree(treepts, distance, ["lat", "lng"])
+}
+
+// create a single canvas object used to generate PNGs
+
+let canvas = document.createElement('canvas');
+let ctx = canvas.getContext('2d');
+canvas.height = 8;
+canvas.width = 8;
+
+/**
+
+Return the data URL of a PNG file for a given tile. Input object parameters:
+
+lng: the longitude of the west side of the grid tile
+lat: the latitude of the south side of the grid tile
+grid: the size of the grid in degrees
+
+*/
+
+function latLngGrid2PNG(obj) {
+
+ // distance
+
+ treenear = tree.nearest({lat: obj.lat*DEGREE, lng: obj.lng*DEGREE}, 1);
+// console.log("OBJ", obj.lat*DEGREE, obj.lng*DEGREE, "TN", treenear[0][0].lat, treenear[0][0].lng);
+
+// console.log(treenear);
+ ctx.fillStyle = colors[treenear[0][0].tag];
+ ctx.fillRect(0, 0, 8, 8);
+
+ ptIsNorth = (obj.lat*DEGREE <= treenear[0][0].lat);
+ ptIsEast = (obj.lng*DEGREE <= treenear[0][0].lng);
+
+ ctx.fillStyle = '#000000';
+ 
+ ctx.beginPath();
+ ctx.moveTo(4, 4);
+
+
+ if (ptIsNorth && !ptIsEast) {
+   ctx.lineTo(0, 0);
+   ctx.stroke(); 
+   ctx.fillRect(1, 0, 1, 1)
+   ctx.fillRect(0, 1, 1, 1)
+
+ } else if (ptIsNorth && ptIsEast) {
+
+   ctx.lineTo(8, 0);
+   ctx.stroke(); 
+   ctx.fillRect(6, 0, 1, 1)
+   ctx.fillRect(7, 1, 1, 1)
+
+ } else if (!ptIsNorth && ptIsEast) {
+
+   ctx.lineTo(8, 8);
+   ctx.stroke(); 
+   ctx.fillRect(7, 6, 1, 1)
+   ctx.fillRect(6, 7, 1, 1)
+
+ } else if (!ptIsNorth  && !ptIsEast) {
+
+   ctx.lineTo(0, 8);
+   ctx.stroke(); 
+   ctx.fillRect(0, 6, 1, 1)
+   ctx.fillRect(1, 7, 1, 1)
+ }
+
+ return canvas.toDataURL('image/png')
+
+}
+
+
+function distance(a, b) {
+
+  return Math.acos(Math.cos(a.lat)*Math.cos(b.lat)*Math.cos(a.lng-b.lng) + Math.sin(a.lat)*Math.sin(b.lat));
+
+}
+
+const map = L.map('map').setView([0, 0], 2);
+
+// call redraw_map if someone moves or zooms
+
+map.on('zoomend', redraw_map);
+map.on('moveend', redraw_map);
+
+// create one big tree with tags
+
+points = []
+
+for (i in usa.points) {points.push({"point": usa.points[i], "tag": "us"})}
+for (i in uk.points) {points.push({"point": uk.points[i], "tag": "uk"})}
+for (i in arg.points) {points.push({"point": arg.points[i], "tag": "arg"})}
+
+tree = points2Tree({height: usa.height, width: usa.width, points: points})
+
+function initialize(){
+ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+ L.imageOverlay("pix0.png", [ [-90, -180], [90, 180] ], {opacity: 0.7}).addTo(map);
+ redraw_map()
+}
+
+////// CUT PASTE STARTS HERE
+
+// this is ugly global variable
+
+items = []
+
+function redraw_map() {
+
+  let bounds = map.getBounds();
+  let z = map.getZoom();
+
+  // remove items (layers) I added last time
+  // TODO: only remove layers after adding new ones using 2 var flip
+
+  for (i in items) {items[i].remove()}
+
+  // grid sizes
+
+  if (z <= 1) {return;}
+
+  grid = zoomDegrees[z];
+
+
+  // get multiples of grid size
+
+  let south = Math.floor(bounds.getSouth()/grid)*grid;
+  let north = Math.ceil(bounds.getNorth()/grid)*grid;
+  let west = Math.floor(bounds.getWest()/grid)*grid;
+  let east = Math.ceil(bounds.getEast()/grid)*grid;
+
+
+  for (i=south; i<=north; i+=grid) {
+    items.push(L.polyline([[i, -180], [i, 180]], {weight: 1}).addTo(map));
+  }
+
+  for (i=west; i<=east; i+=grid) {
+    items.push(L.polyline([[-90, i], [90, i]], {weight: 1}).addTo(map));
+  }
+
+// nested stuff
+
+  for (i=south; i<=north; i+=grid) {
+    for (j=west; j<=east; j+=grid) {
+//       latLngGrid2PNG({lat: i+grid/2, lng: j+grid/2});
+      items.push(L.imageOverlay(latLngGrid2PNG({lat: i+grid/2, lng: j+grid/2, grid: grid}), L.latLngBounds([[i, j], [i+grid, j+grid]]), {opacity: 0.5}).addTo(map));
+      }
+  }
+
+  return;
+}
+
+
+</script>
+
+
+</script>
+
+</body>
