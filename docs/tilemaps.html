@@ -1,0 +1,46 @@
+<link rel="stylesheet" href="includes/leaflet.css" />
+<script src="includes/leaflet.js"></script>
+<script src="includes/turf"></script>
+<!-- <body onload="initialize()"> -->
+
+<div id="main"></div>
+<div id="map" style="height: 600px;"></div>
+ 
+<script>
+
+// reference the map globally
+
+const map = L.map('map').setView([0, 0], 2);
+
+// associative array of overlays
+
+overlays = {};
+
+// creates an option for a given overlay
+
+function create_overlay(tiles, name, tag, options={}) {
+
+ document.getElementById("main").innerHTML += `${name}: <input type="range" id="${tag}" min="0" max="1" step="0.01" value="0" onchange="update(event)" /><br/>`;
+
+ // todo: make sure these bounds are appropriate for Mercator
+
+ overlays[tag] = L.tileLayer(tiles, options)
+ overlays[tag].setOpacity(0)
+ overlays[tag].addTo(map)
+}
+
+function update(e) {
+ overlays[e.target.id].setOpacity(e.target.value)
+}
+
+create_overlay('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', "OSM", "osm")
+
+create_overlay('RASTER/ARG-cyan/{z}/{x}/{y}.png', "Argentina", "arg", {maxNativeZoom: 7})
+create_overlay('RASTER/USA-red/{z}/{x}/{y}.png', "USA", "usa", {maxNativeZoom: 7})
+create_overlay('RASTER/UK-blue/{z}/{x}/{y}.png', "UK", "uk", {maxNativeZoom: 7})
+
+create_overlay('RASTER/ARG_US1_GB1_16384xMERC/{z}/{x}/{y}.png', "ES96VOR", "es96vor", {maxNativeZoom: 7})
+
+</script>
+
+</body>
